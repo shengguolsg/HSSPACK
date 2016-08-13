@@ -1,0 +1,123 @@
+HSSPACK documentation 
+
+This packages includes all the codes that we used to develop fast algorithms for the symmetric tridiagonal
+eigenvalue problem, the bidiagonal SVD problems, and the banded cases. The tools used are the hierarchically
+semiseparable (HSS) matrices. For the sequential and multicore platforms, we have obtained good results, 
+and some are even better than the ones in LAPACK, (e.g., implemented in Intel MKL). This packages also includes
+some basic routines for HSS matrix construction and multiplication routines which may be usefull in some case. 
+
+
+_.N.B._ Since we are aimed at accelerating some algorithms in LAPACK, most of our codes are obtained by modifying 
+the LAPACK routines. The names are also similar to those in LAPACK. Their functionalities are easy to guess, 
+similar to their counterparts in LAPACK. 
+
+
+The STRUCTURE of HSSPACK 
+
+The basic routines are included in THREE modules: aux_hss.f90, BasicMM.f90 and ConstructHssd.f90.   
+Some routines were originally obtained from Ming Gu and Jianlin Xia when Shengguo Li was visiting UC, Berkeley 
+in 2010. This package is based on our previous works:
+
+[1] Li Shengguo, Gu Ming, Cheng Lizhi, Chi Xuebin, and Sun Meng, 
+ An accelerated divide-and-conquer algorithm for the bidiagonal SVD problem, 
+SIAM J. Matrix Anal. Appl., 35 (2014) 1038-1057.
+
+[2] Li Shengguo, Liao Xiangke, Liu Jie, and Jiang Hao, New fast 
+divide-and-conquer algorithms for the symmetric tridiagonal eigenvalue problem, Numer. Linear Algebra Appl. 2016
+
+[3] Liao Xiangke, Li Shengguo, Cheng Lizhi, and Gu Ming, 
+An improved divide-and-conquer algorithm for the banded matrices with narrow bandwidths, Comput. Math. Appl., 2016
+
+[4] Zhang Jieyuan, Li Shengguo, Cheng Lizhi, Liao Xiangke, and Cheng Guangquan, 
+A fast and stable algorithm for downdating the singular value decomposition, Comput. & Math. Appl., 68 (2014) 1421-1430. 
+
+[5] Li Shengguo, Gu Ming, Cinna Wu, and Xia Jianlin, New efficient and robust HSS Cholesky factorization 
+of symmetric positive definite matrices, SIAM J. Matrix Anal. Appl., 33 (2012), pp. 886-904.
+
+[6] Li Shengguo, Gu Ming, Cheng Lizhi. Fast structured LU factorization for nonsymmetric matrices,  Numer. Math., 127 (2014) 35-55.
+
+If you have any quetions, you can send email to nudtlsg@nudt.edu.cn for helps.
+We will try our best to answer email if we are able to solve your problem.
+But we do not guarantee that all your emails will be answered. 
+ 
+
+Chap 1. Updating SVD problem[4]
+
+There are three versions of updating SVD problem, using three different HSS construction algorithms. 
+We used truncated SVD, randomized SVD algorithm and Cauchy-like construction algorithm for low-rank 
+approximations. 
+According to the review of our paper, we need to compare these three HSS construction algorithms. 
+
+We have the choice of only updating the right singular vector matrix and updating both singular vector
+matrices. 
+An important problem of current codes is the deflation routine. 
+Therefore, it can not be used in practice. 
+We add one routine to implement the deflation MDLASD20, which only works for the computing right 
+singular vector matrix case. It can be easily modified to the case that both the left and right 
+singular vector matrices are required. 
+The case of computing the left singular vector matrix is not modified yet. 
+It will be done later. 
+
+Some details: 
+
+1) The old singular values passed to SvdHssupdat must be in increasing order. 
+
+_.N.B._ Very important: When using this routine, you must first set nswap = -1 before
+                        you call cauchy2hssvd routine. 
+
+Chap 2. RRLU Cauchy-like HSS construction [1]
+
+The serial version includes TWO kinds of pivoting strategies, one is complete pivoting
+(CauchyHss_CP), and another is our modified Gu's pivoting strategy (CauchyHss_VP2). 
+These two routine will generate two module files, CauchyHss_CP.o. and CauchyHss_VP2.o. 
+To use it, you only need to include the right one in your executing files. 
+
+
+Chap 3. Bidiagonal SVD problem [1]
+
+The routines for bidiagonal SVD are 
+   mdbdsdc.f90  mdlasd0.f90  mdlasd1.f90 mdlasd2.f90  mdlasd3.f90  mdlasd8.f90 
+   torthsvd.f  transp2d.f
+
+These routines are sequential codes. But the multiplication codes are using Lyons's 
+algorithm, which can be implemented in parallel. But we did not do that. 
+
+The test routine is testvaldqds.
+
+
+
+Chap 4. Symmetric Tridiagonal Eigenvalue problem [2]
+
+This algorithm only has OpenMP version, i.e. the HSS construction is done level-by-level. 
+The algorithm of following the postordering HSS tree is not implemented. 
+
+The routines for Tridiagonal Eigenvalue problems are
+    CauchyHssEig.f90  mdlaed0.f90  mdlaed1.f90 mdlaed1.f90  mdlaed2.f90 
+    mdlaed3.f90  mdlaed33.f90 fastHssmmL_omp.f90 fastHssmmL.f90
+
+The test routine is Testedc.f90. 
+
+
+Chap 5. New robust HSS Cholesky factorization [5]
+
+We used randomized SVD and truncated SVD algorithm to compute the low-rank approximations.
+The executive routines are
+   aux_hss.f90 mat2hsssvd.f90
+The test routine is testhsschol.f90. 
+
+
+Chap 6. Band DC algorithm for singular value problems [3]
+
+We have written three versions of band DC alorithm. The first one is pure band DC without
+using HSS matrix techniques. The second one is band Dc with HSS. The third one only computes
+the singular values. We probably could add the case that computes singular values and singular
+vectors in compact form. 
+HSSPACK would firstly includes the second version since it would be faster than the first version,
+which is in Version3-N directory. 
+The third has not been finished completely yet, which is in BDC-Version2-Simp directory.  
+
+The BDC routines are 
+    TestRoutine.o mdbdsvd.o mdbdsvd1.o mdbdsvd2.o mdbdsvd22.o mdbdsvd4.o mdbdsvdt.o 
+    transp2di.o Sftransf.o 
+
+The test routine is test_bdc1.f90
